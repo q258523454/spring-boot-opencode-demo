@@ -1,0 +1,27 @@
+server:
+  servlet:
+    context-path: /
+  port: 8080
+
+spring:
+  datasource:
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/zhang?useSSL=false&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2B8
+      username: root
+      password: 123456
+# ------------------------------------ mybatis相关配置 BEGIN ------------------------------------
+mybatis:
+  configuration:
+    # 打印sql语句
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  # 配置mapper映射和entity映射, MapperScan位置在Application中配置
+  # 注意： classpath*：不仅在本地项目resources中查找,还包括jar包中的， classpath则只包含本地的
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  type-handlers-package: com.handler.typehandle
+# ------------------------------------ mybatis相关配置 END ------------------------------------
+
+logging:
+  level:
+    org.springframework.jdbc: DEBUG
+    com.alibaba.druid: DEBUG

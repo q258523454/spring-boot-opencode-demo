@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ==================== 自定义配置项 BEGIN ==================== -->
+    <!-- 定义变量,引用${var} -->
+    <!-- 项目名称, 用于日志打印前缀 -->
+    <property name="PROJECT_NAME" value="PROJECT"/>
+    <!-- 日志文件路径 -->
+    <property name="LOG_PATH" value="logs"/>
+    <!-- info日志文件名 -->
+    <property name="INFO_FILE" value="app.log"/>
+    <!-- error日志文件名 -->
+    <property name="ERROR_FILE" value="app-error.log"/>
+
+
+    <!-- ==================== 自定义配置项 END ==================== -->
+
+
+    <!-- Spring default values -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <!-- CONSOLE默认配置, %-40.40logger{39}: 中logger等价于%C(日志包.类), 符号'-'表示左对齐, 显示长度最小/大宽度40-->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="${CONSOLE_LOG_PATTERN:-%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <property name="myCML" value="%C.%M[%L]"/>
+
+
+    <!-- 控制台 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- 默认配置 -->
+            <!--<pattern>CONSOLE_LOG_PATTERN</pattern>-->
+            <pattern>
+                <!-- 语法: %clr([%变量名]){颜色} -->
+                %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint}
+                %clr([%15.15t]){faint} %clr(%C){cyan}.%clr(%M){cyan}%clr([%L]){cyan} : %m%n%wEx
+            </pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+
+    <!-- info文件输出 -->
+    <appender name="INFOFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_PATH}/${INFO_FILE}</File>
+        <Append>true</Append>
+        <encoder>
+            <!-- 符号'()'要加上转义'\(\)'-->
+            <pattern>[${PROJECT_NAME}-info] %p %d{yyyy-MM-dd HH:mm:ss,SSS} %C.%M[%L] %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <!-- 滚动策略: 按天生成 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${INFO_FILE}.%d{yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+
+    <!-- error文件输出 -->
+    <appender name="ERRORFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Append>true</Append>
+        <File>${LOG_PATH}/${ERROR_FILE}</File>
+        <encoder>
+            <pattern>[${PROJECT_NAME}-error] %p %d{yyyy-MM-dd HH:mm:ss,SSS} %C.%M[%L]) %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <!-- 滚动策略: 按天生成 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${ERROR_FILE}.%d{yyyy-MM-dd}</fileNamePattern>
+            <!-- 最多只保留最近1个月的log -->
+            <MaxHistory>1</MaxHistory>
+        </rollingPolicy>
+    </appender>
+
+
+    <!-- 定义日志等级: 将输入到appender, appender自身再过滤 -->
+    <!-- DEBUG < INFO < WARN < ERROR < FATAL -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <!--        <appender-ref ref="INFOFILE"/>-->
+        <!--        <appender-ref ref="ERRORFILE"/>-->
+    </root>
+</configuration>
