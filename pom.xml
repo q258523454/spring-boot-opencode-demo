@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>spring-boot-mysql-base</artifactId>
+    <artifactId>spring-boot-opencode-demo</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>spring-boot-mysql-base</name>
+    <name>spring-boot-opencode-demo</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -98,10 +98,23 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+
     </dependencies>
 
     <build>
-        <finalName>spring-boot-mysql-base</finalName>
+        <finalName>spring-boot-opencode-demo</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

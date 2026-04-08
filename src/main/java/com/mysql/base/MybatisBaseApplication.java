@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan({"com.mysql.base.dao"})
+@MapperScan({"com.mysql.base.repository"})
 public class MybatisBaseApplication {
     public static void main(String[] args) {
         SpringApplication.run(MybatisBaseApplication.class, args);
