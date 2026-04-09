@@ -10,6 +10,12 @@ spring:
       url: jdbc:mysql://localhost:3306/zhang?useSSL=false&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2B8
       username: root
       password: 123456
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
+
 # ------------------------------------ mybatis相关配置 BEGIN ------------------------------------
 mybatis:
   configuration:
