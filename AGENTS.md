@@ -176,13 +176,19 @@ public class UserController {
 
 #### Service 实现示例
 接口层
+注意：使用到`mybatis plus`功能
 ```java
+import com.baomidou.mybatisplus.extension.service.IService;
+
 public interface UserService extends IService<User>{
     UserVO register(UserDTO userDTO);
 }
 ```
-实现层
+实现层  
+注意：使用到`mybatis plus`功能
 ```java
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -341,3 +347,4 @@ class GreetingServiceUnitTest {
 6. 禁止跨层直接调用数据库 
 7. 尽量避免使用过时 API
 8. 禁止使用不安全 API
+9. 禁止直接使用秘钥、密码明文
