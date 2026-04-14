@@ -155,58 +155,106 @@
   - 无意义的注释不需要写，如 "get user" 这类显而易见的注释。
 
 ### 4. 代码模板示例
-#### Controller 示例
+
+#### POJO层
+
+```java
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName("student")
+public class Student implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 主键ID
+     */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Integer id;
+
+    /**
+     * 学生姓名
+     */
+    private String name;
+
+    /**
+     * 学生年龄
+     */
+    private Integer age;
+}
+```
+
+
+
+#### Controller 层
 
 ```java
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/students")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/register")
-    public ResultVO<UserVO> register(@Valid @RequestBody UserDTO userDTO) {
-        UserVO userVO = userService.register(userDTO);
-        return ResultVO.success(userVO);
+    @PostMapping("/create")
+    public ResultVO<StudentVO> createStudent(@Valid @RequestBody StudentCreateDTO dto) {
+        log.info("创建学生请求: {}", dto);
+        StudentVO vo = userService.createStudent(dto);
+        return ResultVO.success(vo);
     }
 }
 ```
 
-#### Service 实现示例
+#### Service 层
 接口层
 注意：使用到`mybatis plus`功能
+
 ```java
 import com.baomidou.mybatisplus.extension.service.IService;
 
-public interface UserService extends IService<User>{
-    UserVO register(UserDTO userDTO);
+public interface StudentService extends IService<Student>{
+    StudentVO createStudent(StudentCreateDTO dto);
 }
 ```
 实现层  
 注意：使用到`mybatis plus`功能
+
 ```java
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> implements StudentService {
 
-    @Autowired
-    private final UserMapper userMapper;
-    
-    @Autowired
-    private final UserConverter userConverter;
+    private final StudentMapper studentMapper;
+    private final StudentConverter studentConverter;
+    private final RedissonClient redissonClient;
 
     @Override
-    @Transactional
-    public UserVO register(UserDTO userDTO) {
-        // 业务校验...
-        User user = userConverter.dtoToUser(userDTO);
-        userMapper.insert(user);
-        return userConverter.entityToUserBO(user);
+    @Transactional(rollbackFor = Exception.class)
+    public StudentVO createStudent(StudentCreateDTO dto) {
+        Student student = studentConverter.createDTOToEntity(dto);
+        log.info("待插入数据:" + JSON.toJSONString(student));
+        studentMapper.insert(student);
+        log.info("创建学生成功，ID: {}", student.getId());
+        return studentConverter.entityToVO(student);
     }
 }
 ```
@@ -217,23 +265,29 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface UserConverter {
-    UserConverter INSTANCE = Mappers.getMapper(UserConverter.class);
+  
+    /**
+     * DTO转Entity
+     */
+    Student createDTOToEntity(StudentCreateDTO dto);
 
-    User dtoToUser(UserDTO userDTO);
-    
-    UserVO entityToUserVO(User User);
+    /**
+     * Entity转VO
+     */
+    StudentVO entityToVO(Student entity);
 }
 ```
 
-#### 全局异常处理
+#### Exception 全局异常处理
 ```java
-@RestControllerAdvice
 @Slf4j
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResultVO<Void> handleBusinessException(BusinessException e) {
         log.warn("业务异常：{}", e.getMessage());
         return ResultVO.error(e.getCode(), e.getMessage());
@@ -259,67 +313,132 @@ public class GlobalExceptionHandler {
 - 测试类命名：`XxxServiceTest`, `XxxControllerTest`。
 - 测试接口必须全部通过
 ### 测试代码示例
-#### controller层
+#### controller层（测试类）
 ```java
 @Slf4j
-@WebMvcTest(GreetingController.class)
-class GreetingControllerMockTest {
+@WebMvcTest(StudentController.class)
+class StudentControllerTest {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private MockMvc mockMvc;
 
-    // 模拟 GreetingService，不加载真实实现
     @MockitoBean
-    private GreetingService service;
+    private StudentService service;
+
+    @MockitoBean
+    private StudentMapper studentMapper;
 
     @Test
-    void greet_shouldUseMockedService() throws Exception {
-        when(service.greet(anyString())).thenReturn("Mocked Hello");
-        MockHttpServletRequestBuilder param = get("/greet").param("name", "Test");
+    void createStudent_shouldReturnCreatedStudent() throws Exception {
+        log.info("开始执行create测试.");
+        StudentCreateDTO studentCreateDTO = StudentCreateDTO.builder().name("张三").age(18).build();
+        StudentVO studentVO = StudentVO.builder().id(99).age(99).name("99").build();
+
+        when(service.createStudent(studentCreateDTO)).thenReturn(studentVO);
+
+        MockHttpServletRequestBuilder param = post("/api/students/create")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(studentCreateDTO));
         MvcResult mvcResult = mockMvc.perform(param)
                 .andExpect(status().isOk())
-                .andExpect(content().string("Mocked Hello"))
+                .andExpect(content().string(objectMapper.writeValueAsString(studentVO)))
                 .andReturn();
         log.info("response is :" + mvcResult.getResponse().getContentAsString());
     }
 }
 ```
-#### service层
+#### service层（测试类）
 ```java
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-class GreetingServiceUnitTest {
+class StudentServiceTest {
 
-    private GreetingService service;
+    @InjectMocks
+    private StudentServiceImpl studentService;
 
+    @Mock
+    private StudentMapper studentMapper;
 
-    /**
-     * 每个测试方法执行前
-     */
+    @Mock
+    private StudentConverter studentConverter;
+
+    @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RBucket<Object> rbucket;
+
     @BeforeEach
     public void setUp() {
-        service = new GreetingService();
+        // 每个测试方法执行前的初始化
     }
 
-    /**
-     * 不启动 Spring 上下文
-     * 纯单元测试
-     */
     @Test
-    void greet_shouldReturnFormattedMessage() {
+    void createStudent_shouldReturnStudentVO() {
         // given
-        String name = "JUnit5";
+        StudentCreateDTO dto = new StudentCreateDTO();
+
+        Student student = new Student();
+        student.setId(1);
+        student.setName("Test Student");
+        student.setAge(20);
+
+        StudentVO vo = new StudentVO();
+        vo.setId(1);
+        vo.setName("Test Student");
+        vo.setAge(20);
+
+        when(studentConverter.createDTOToEntity(any(StudentCreateDTO.class))).thenReturn(student);
+        when(studentMapper.insert(any(Student.class))).thenReturn(1);
+        when(studentConverter.entityToVO(any(Student.class))).thenReturn(vo);
 
         // when
-        String result = service.greet(name);
-        log.info(result);
+        StudentVO result = studentService.createStudent(dto);
 
         // then
-        assertThat(result).isEqualTo("Hello, JUnit5!");
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1);
+        assertThat(result.getName()).isEqualTo("Test Student");
+        assertThat(result.getAge()).isEqualTo(20);
+
+        verify(studentMapper, times(1)).insert(any(Student.class));
     }
 }
 ```
-#### 集成测试 integration
+#### 集成测试 integration（测试类）
+
+```java
+@Slf4j
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class StudentIntegrationTest {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void greet_shouldReturnRealServiceResponse() {
+        StudentCreateDTO studentCreateDTO = StudentCreateDTO.builder().name("张三").age(18).build();
+
+        String url = "http://localhost:" + port + "/api/students/create";
+        ResponseEntity<StudentVO> response = restTemplate.postForEntity(url, studentCreateDTO, StudentVO.class);
+        StudentVO body = response.getBody();
+        log.info("body={}", body);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody().getName()).isEqualTo(studentCreateDTO.getName());
+        assertThat(response.getBody().getAge()).isEqualTo(studentCreateDTO.getAge());
+    }
+}
+```
+
+
 
 ## AI 代码生成要求
 1. **新增功能时**：
