@@ -43,6 +43,5 @@ public interface StudentConverter {
     /**
      * UpdateDTO转Entity（不包含ID）
      */
-    @Mapping(target = "id", source = "id")
     Student updateDTOToEntity(StudentUpdateDTO dto);
 }

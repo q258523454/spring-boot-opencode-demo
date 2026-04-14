@@ -28,7 +28,7 @@ public class StudentController {
     /**
      * 创建学生
      */
-    @PostMapping
+    @PostMapping("/create")
     public StudentVO createStudent(@Valid @RequestBody StudentCreateDTO dto) {
         log.info("创建学生请求: {}", dto);
         return studentService.createStudent(dto);
@@ -65,7 +65,7 @@ public class StudentController {
     /**
      * 分页查询学生列表
      */
-    @GetMapping
+    @GetMapping("/list")
     public IPage<StudentVO> getStudentList(StudentQueryDTO queryDTO) {
         log.info("分页查询学生列表请求: {}", queryDTO);
         return studentService.getStudentList(queryDTO);

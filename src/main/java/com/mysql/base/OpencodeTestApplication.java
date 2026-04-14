@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @MapperScan({"com.mysql.base.repository"})
-public class MybatisBaseApplication {
+public class OpencodeTestApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MybatisBaseApplication.class, args);
+        SpringApplication.run(OpencodeTestApplication.class, args);
     }
 
 }

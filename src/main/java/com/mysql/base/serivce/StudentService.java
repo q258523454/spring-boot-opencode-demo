@@ -1,10 +1,12 @@
 package com.mysql.base.serivce;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.mysql.base.pojo.bo.StudentBO;
 import com.mysql.base.pojo.dto.StudentCreateDTO;
 import com.mysql.base.pojo.dto.StudentQueryDTO;
 import com.mysql.base.pojo.dto.StudentUpdateDTO;
+import com.mysql.base.pojo.entity.Student;
 import com.mysql.base.pojo.vo.StudentVO;
 
 /**
@@ -13,7 +15,7 @@ import com.mysql.base.pojo.vo.StudentVO;
  * @author zhang
  * @since 2026-04-13
  */
-public interface StudentService {
+public interface StudentService extends IService<Student> {
 
     /**
      * 创建学生
